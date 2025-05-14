@@ -1,6 +1,9 @@
 # Python
 __pycache__/
 *.pyc
+testing/__pycache__
+agents/__pycache__
+tools/__pycache__
 
 # Virtual env
 venv/
