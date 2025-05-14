@@ -1,7 +1,9 @@
+
+
 import os
 import praw
 from dotenv import load_dotenv
-from langchain.tools import tool
+from langchain.tools import Tool
 import re
 
 load_dotenv()
@@ -12,14 +14,7 @@ reddit = praw.Reddit(
     user_agent=os.getenv("REDDIT_USER_AGENT")
 )
 
-@tool("fetch_reddit_posts", return_direct=True)
 def fetch_reddit_posts_tool(input_text: str) -> str:
-    """
-    Fetch Reddit posts + top comments about a car from multiple subreddits.
-    Format: 'Car Model | subreddit1,subreddit2,...'
-    Example: 'Honda Civic 2020 | cars,whatcarshouldibuy,CarsAustralia'
-    If year is not specified, defaults to 'latest model'.
-    """
     try:
         if "|" in input_text:
             car_model, subreddit_str = [s.strip() for s in input_text.split("|")]
@@ -84,8 +79,19 @@ def fetch_reddit_posts_tool(input_text: str) -> str:
     except Exception as e:
         return f"❌ Error fetching Reddit posts: {e}"
 
+fetch_reddit_posts_tool = Tool.from_function(
+    name="fetch_reddit_posts",
+    func=fetch_reddit_posts_tool,
+    description="""
+    Fetch Reddit posts + top comments about a car from multiple subreddits.
+    Format: 'Car Model | subreddit1,subreddit2,...'
+    Example: 'Honda Civic 2020 | cars,whatcarshouldibuy,CarsAustralia'
+    If year is not specified, defaults to 'latest model'.
+    """
+)
+
 
 # Example runs:
-result = fetch_reddit_posts_tool.run("Lexus IS250 | cars,whatcarshouldibuy,CarsAustralia")
+# result = fetch_reddit_posts_tool.run("Lexus IS250 | cars,whatcarshouldibuy,CarsAustralia")
 # result = fetch_reddit_posts_tool.run("Honda Civic | cars,whatcarshouldibuy")
-print(result)
+# print(result)
