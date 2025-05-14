@@ -11,4 +11,4 @@ data/*.json
 data/raw_reddit/
 
 # Misc
-reddit.png
+misc/reddit.png
