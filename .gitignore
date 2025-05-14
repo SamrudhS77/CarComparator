@@ -5,6 +5,7 @@ testing/__pycache__
 agents/__pycache__
 tools/__pycache__
 tools/__init__.py
+agents/__init__.py
 
 # Virtual env
 venv/
