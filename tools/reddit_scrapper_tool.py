@@ -1,20 +1,32 @@
-
+# tools/reddit_scrapper_tool.py
 
 import os
+import re
 import praw
 from dotenv import load_dotenv
-from langchain.tools import Tool
-import re
+from crewai.tools import tool
 
+# Load environment variables
 load_dotenv()
 
+# Initialize Reddit client
 reddit = praw.Reddit(
     client_id=os.getenv("REDDIT_CLIENT_ID"),
     client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
     user_agent=os.getenv("REDDIT_USER_AGENT")
 )
 
-def fetch_reddit_posts_tool(input_text: str) -> str:
+@tool("fetch_reddit_posts")
+def fetch_reddit_posts(input_text: str) -> str:
+    """
+    Search Reddit for user feedback on a specific car model and year.
+    
+    Format:
+    - 'Car Model | subreddit1,subreddit2,...'
+    - Example: 'Honda Civic 2020 | cars,whatcarshouldibuy,CarsAustralia'
+
+    Defaults to the latest model if no year is provided.
+    """
     try:
         if "|" in input_text:
             car_model, subreddit_str = [s.strip() for s in input_text.split("|")]
@@ -24,16 +36,14 @@ def fetch_reddit_posts_tool(input_text: str) -> str:
             subreddits = ["cars", "whatcarshouldibuy", "askcarsales"]
 
         car_model = car_model.lower()
-
         year_match = re.search(r"\b(19|20)\d{2}\b", car_model)
         required_year = year_match.group(0) if year_match else None
+
         results = []
 
         for sub in subreddits:
             for submission in reddit.subreddit(sub).search(car_model, sort="relevance", limit=7):
-                if not submission.is_self:
-                    continue
-                if submission.score < 2:
+                if not submission.is_self or submission.score < 2:
                     continue
 
                 if required_year:
@@ -49,11 +59,10 @@ def fetch_reddit_posts_tool(input_text: str) -> str:
 
                 snippet = submission.selftext.split("\n")[0][:300].strip()
 
-                # Extract top 3 useful comments
                 submission.comment_sort = 'top'
                 submission.comments.replace_more(limit=0)
-
                 top_comments = []
+
                 for comment in submission.comments[:6]:
                     text = comment.body.strip()
                     if len(text) > 50 and "bot" not in text.lower():
@@ -78,20 +87,3 @@ def fetch_reddit_posts_tool(input_text: str) -> str:
 
     except Exception as e:
         return f"❌ Error fetching Reddit posts: {e}"
-
-fetch_reddit_posts_tool = Tool.from_function(
-    name="fetch_reddit_posts",
-    func=fetch_reddit_posts_tool,
-    description="""
-    Fetch Reddit posts + top comments about a car from multiple subreddits.
-    Format: 'Car Model | subreddit1,subreddit2,...'
-    Example: 'Honda Civic 2020 | cars,whatcarshouldibuy,CarsAustralia'
-    If year is not specified, defaults to 'latest model'.
-    """
-)
-
-
-# Example runs:
-# result = fetch_reddit_posts_tool.run("Lexus IS250 | cars,whatcarshouldibuy,CarsAustralia")
-# result = fetch_reddit_posts_tool.run("Honda Civic | cars,whatcarshouldibuy")
-# print(result)
