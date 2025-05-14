@@ -1,0 +1,10 @@
+langchain
+langgraph
+openai
+praw
+python-dotenv
+beautifulsoup4
+requests
+pandas
+textblob
+litellm
