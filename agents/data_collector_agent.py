@@ -6,24 +6,26 @@ from tools.reddit_scrapper_tool import fetch_reddit_posts
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
-llama_llm = LLM(model="groq/llama3-70b-8192",
-          base_url="https://api.groq.com/openai/v1",
-          api_key=os.getenv("GROQ_API_KEY"))
+gpt_llm = LLM(model="gpt-3.5-turbo",
+          # base_url="https://api.groq.com/openai/v1",
+          api_key=os.getenv("OPENAI_API_KEY"),
+          max_tokens=500)
 
 data_collector_agent = Agent(
     role="Reddit Data Collector",
     goal="Fetch Reddit posts and top comments about specific car models",
     backstory="You specialize in extracting relevant Reddit content for vehicle comparisons.",
-    llm=llama_llm,
+    llm=gpt_llm,
+    max_iter = 3,
     tools=[fetch_reddit_posts],
     verbose=True
 )
 
 
 task = Task(
-    description="Fetch Reddit posts about Honda Civic 2020",
+    description="Fetch Reddit posts about Toyota Hilux",
     agent=data_collector_agent,
-    expected_output="Summarized Reddit feedback about the car"
+    expected_output="Summarized Reddit feedback about the car, taking into consideration the sentiment overall on said car."
 )
 
 # 🔍 Test a direct task run

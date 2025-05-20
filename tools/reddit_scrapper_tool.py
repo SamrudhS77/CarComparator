@@ -42,7 +42,7 @@ def fetch_reddit_posts(input_text: str) -> str:
         results = []
 
         for sub in subreddits:
-            for submission in reddit.subreddit(sub).search(car_model, sort="relevance", limit=7):
+            for submission in reddit.subreddit(sub).search(car_model, sort="relevance", limit=2):
                 if not submission.is_self or submission.score < 2:
                     continue
 
@@ -63,7 +63,7 @@ def fetch_reddit_posts(input_text: str) -> str:
                 submission.comments.replace_more(limit=0)
                 top_comments = []
 
-                for comment in submission.comments[:6]:
+                for comment in submission.comments[:2]:
                     text = comment.body.strip()
                     if len(text) > 50 and "bot" not in text.lower():
                         top_comments.append(f"💬 {text[:200]}...")
@@ -83,7 +83,15 @@ def fetch_reddit_posts(input_text: str) -> str:
             return f"🔍 No useful posts found for '{car_model}' in subreddits: {', '.join(subreddits)}."
 
         readable_title = f"{car_model} {required_year}" if required_year else f"{car_model.title()} (Latest Model)"
-        return f"🔎 Reddit Results for **{readable_title}**\n\n" + "\n\n".join(results[:10])
+        # return f"🔎 Reddit Results for **{readable_title}**\n\n" + "\n\n".join(results[:10])
+        
+        summary_prompt = (
+            f"🔎 Reddit Results for **{readable_title}**\n\n"
+            + "\n\n---\n\n".join(results[:10]) +
+            "\n\n📘 Please summarize the key sentiments and themes expressed across these Reddit posts."
+        )
+
+        return summary_prompt
 
     except Exception as e:
         return f"❌ Error fetching Reddit posts: {e}"
